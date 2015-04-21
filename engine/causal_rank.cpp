@@ -54,3 +54,60 @@ struct Edge {
     double coupling = 1.0;   // 0..1 strength of causal coupling
 };
 
+// The graph plus fast lookup indices.
+class CausalGraph {
+public:
+    std::vector<Node> nodes;
+    std::vector<Edge> edges;
+    std::unordered_map<std::string, std::size_t> index;
+
+    void add_node(const Node& n) {
+        index[n.id] = nodes.size();
+        nodes.push_back(n);
+    }
+
+    void add_edge(const Edge& e) { edges.push_back(e); }
+
+    Node* find(const std::string& id) {
+        auto it = index.find(id);
+        if (it == index.end()) return nullptr;
+        return &nodes[it->second];
+    }
+
+    // Outgoing adjacency (src -> list of edge indices).
+    std::unordered_map<std::string, std::vector<std::size_t>> out_adj() const {
+        std::unordered_map<std::string, std::vector<std::size_t>> adj;
+        for (std::size_t i = 0; i < edges.size(); ++i) {
+            adj[edges[i].src].push_back(i);
+        }
+        return adj;
+    }
+
+    // Incoming adjacency (dst -> list of edge indices).
+    std::unordered_map<std::string, std::vector<std::size_t>> in_adj() const {
+        std::unordered_map<std::string, std::vector<std::size_t>> adj;
+        for (std::size_t i = 0; i < edges.size(); ++i) {
+            adj[edges[i].dst].push_back(i);
+        }
+        return adj;
+    }
+};
+
+// Temporal decay kernel: upstream events that occur *before* a failing sink
+// are more suspicious the closer they are in time. We use a bounded
+// exponential so ordering never produces negative or exploding weights.
+static double temporal_kernel(double upstream_end, double downstream_start,
+                              double half_life) {
+    double dt = downstream_start - upstream_end;
+    if (dt < 0.0) {
+        // Upstream ended after downstream started: weak causal support.
+        return 0.15;
+    }
+    if (half_life <= 0.0) half_life = 1.0;
+    return std::exp(-0.6931471805599453 * dt / half_life);
+}
+
+// Count downstream-reachable nodes for a given start via BFS. This is the
+// blast radius: how much of the graph a failure at `start` can influence.
+static int blast_radius(const CausalGraph& g,
+                        const std::unordered_map<std::string, std::vector<std::size_t>>& adj,
