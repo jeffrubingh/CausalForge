@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" width="960" height="300" role="img" aria-label="CausalForge: blame propagating backward through a causal graph">
+  <title>CausalForge causal graph propagation</title>
+  <defs>
+    <linearGradient id="graphite" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1d21"/>
+      <stop offset="1" stop-color="#0c0d10"/>
+    </linearGradient>
+    <radialGradient id="ember" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="0.45" stop-color="#ff8a3c"/>
+      <stop offset="1" stop-color="#b23a10"/>
+    </radialGradient>
+    <linearGradient id="spark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8a3c" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffd27a" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ff8a3c" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="960" height="300" fill="url(#graphite)"/>
+  <!-- faint graphite grid -->
+  <g stroke="#23262c" stroke-width="1">
+    <line x1="0" y1="75" x2="960" y2="75"/>
+    <line x1="0" y1="150" x2="960" y2="150"/>
+    <line x1="0" y1="225" x2="960" y2="225"/>
+  </g>
+
+  <!-- edges -->
+  <g stroke="#3a3f47" stroke-width="3" fill="none">
+    <path d="M150,150 L340,90"/>
+    <path d="M150,150 L340,210"/>
+    <path d="M340,90 L540,150"/>
+    <path d="M340,210 L540,150"/>
+    <path d="M540,150 L740,110"/>
+    <path d="M540,150 L740,200"/>
+  </g>
+
+  <!-- travelling blame sparks flowing backward (right to left) -->
+  <g stroke="url(#spark)" stroke-width="4" fill="none" filter="url(#glow)">
+    <path d="M740,110 L540,150" stroke-dasharray="24 220">
+      <animate attributeName="stroke-dashoffset" from="0" to="-244" dur="2.6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M540,150 L340,90" stroke-dasharray="24 220">
+      <animate attributeName="stroke-dashoffset" from="0" to="-244" dur="2.6s" begin="0.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M340,90 L150,150" stroke-dasharray="24 220">
+      <animate attributeName="stroke-dashoffset" from="0" to="-244" dur="2.6s" begin="1.0s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- nodes -->
+  <g font-family="Consolas,Menlo,monospace" font-size="12" fill="#c9ced6" text-anchor="middle">
+    <g>
+      <circle cx="150" cy="150" r="20" fill="url(#ember)" filter="url(#glow)">
+        <animate attributeName="r" values="20;24;20" dur="2.6s" repeatCount="indefinite"/>
+      </circle>
+      <text x="150" y="192">cache.warmer</text>
+    </g>
+    <circle cx="340" cy="90" r="14" fill="#2b2f36" stroke="#ff8a3c" stroke-width="2"/>
+    <text x="340" y="66">retriever</text>
+    <circle cx="340" cy="210" r="14" fill="#2b2f36" stroke="#5b6068" stroke-width="2"/>
+    <text x="340" y="240">embedding</text>
