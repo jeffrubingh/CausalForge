@@ -111,3 +111,60 @@ static double temporal_kernel(double upstream_end, double downstream_start,
 // blast radius: how much of the graph a failure at `start` can influence.
 static int blast_radius(const CausalGraph& g,
                         const std::unordered_map<std::string, std::vector<std::size_t>>& adj,
+                        const std::string& start) {
+    std::map<std::string, bool> seen;
+    std::vector<std::string> stack{start};
+    seen[start] = true;
+    int count = 0;
+    while (!stack.empty()) {
+        std::string cur = stack.back();
+        stack.pop_back();
+        auto it = adj.find(cur);
+        if (it == adj.end()) continue;
+        for (std::size_t ei : it->second) {
+            const std::string& nxt = g.edges[ei].dst;
+            if (!seen[nxt]) {
+                seen[nxt] = true;
+                ++count;
+                stack.push_back(nxt);
+            }
+        }
+    }
+    return count;
+}
+
+// The core ranking routine. Blame flows backward from failed/degraded sinks
+// along incoming edges, attenuated by coupling strength and the temporal
+// kernel. We iterate a fixed number of propagation rounds so the algorithm
+// is deterministic and terminates without a convergence oracle.
+void rank(CausalGraph& g, int rounds = 6, double half_life = 5.0) {
+    auto in = g.in_adj();
+    auto out = g.out_adj();
+
+    // Seed: failing sinks inject blame proportional to severity.
+    for (auto& n : g.nodes) {
+        if (n.status == 2) n.blame = 1.0;
+        else if (n.status == 1) n.blame = 0.4;
+        else n.blame = 0.0;
+    }
+
+    // Propagate blame upstream over several damped rounds.
+    for (int r = 0; r < rounds; ++r) {
+        std::unordered_map<std::string, double> delta;
+        for (const auto& n : g.nodes) {
+            if (n.blame <= 1e-9) continue;
+            auto it = in.find(n.id);
+            if (it == in.end()) continue;
+            for (std::size_t ei : it->second) {
+                const Edge& e = g.edges[ei];
+                Node* up = g.find(e.src);
+                if (!up) continue;
+                double k = temporal_kernel(up->t_end, n.t_start, half_life);
+                double transfer = n.blame * e.coupling * k * 0.55;
+                delta[up->id] += transfer;
+            }
+        }
+        for (auto& kv : delta) {
+            Node* up = g.find(kv.first);
+            if (up) up->blame += kv.second;
+        }
