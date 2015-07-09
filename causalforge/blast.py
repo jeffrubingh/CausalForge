@@ -24,3 +24,29 @@ def reachable_set(graph: CausalGraph, start: str) -> Set[str]:
     seen: Set[str] = set()
     stack = [start]
     visited_start = False
+    while stack:
+        cur = stack.pop()
+        if cur in seen:
+            continue
+        if visited_start:
+            seen.add(cur)
+        visited_start = True
+        for edge in graph.out_edges(cur):
+            if edge.dst not in seen and edge.dst != start:
+                stack.append(edge.dst)
+    seen.discard(start)
+    return seen
+
+
+def blast_radius(graph: CausalGraph, start: str) -> int:
+    """Number of downstream-reachable nodes from ``start``."""
+    return len(reachable_set(graph, start))
+
+
+def weighted_blast(graph: CausalGraph, start: str) -> float:
+    """Coupling-weighted blast radius.
+
+    Instead of counting nodes equally, sum the product of edge couplings along
+    the shortest discovered path. This rewards culprits that are *tightly*
+    coupled to a large downstream region.
+    """
