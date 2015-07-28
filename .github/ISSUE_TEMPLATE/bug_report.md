@@ -5,7 +5,3 @@ title: "[bug] "
 labels: bug
 ---
 
-## Command
-
-## Input shape or fixture
-
