@@ -32,38 +32,3 @@ def render_json(incident: Incident, graph: CausalGraph,
         "primary_suspect": suspects[0].node_id if suspects else None,
         "suspects": [s.to_dict() for s in suspects],
         "timeline": [
-            {
-                "node_id": e.node_id,
-                "t_start": e.t_start,
-                "t_end": e.t_end,
-                "status": e.status,
-                "kind": e.kind,
-            }
-            for e in timeline
-        ],
-        "warnings": graph.validate(),
-    }
-    return json.dumps(payload, indent=2)
-
-
-def render_markdown(incident: Incident, graph: CausalGraph,
-                    suspects: List[Suspect]) -> str:
-    lines: List[str] = []
-    lines.append(f"# Investigation: {incident.title}")
-    lines.append("")
-    lines.append(f"- **Incident ID:** `{incident.id}`")
-    if incident.origin_ts:
-        lines.append(f"- **Origin:** {incident.origin_ts}")
-    lines.append(f"- **Nodes:** {graph.order()}  **Edges:** {graph.size()}")
-    if suspects:
-        lines.append(f"- **Primary suspect:** `{suspects[0].node_id}` "
-                     f"(score {suspects[0].score:.3f})")
-    lines.append("")
-    if incident.summary:
-        lines.append("## Summary")
-        lines.append("")
-        lines.append(incident.summary)
-        lines.append("")
-
-    lines.append("## Ranked suspects")
-    lines.append("")

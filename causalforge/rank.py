@@ -66,3 +66,37 @@ def _propagate(graph: CausalGraph, cfg: RankConfig) -> Dict[str, float]:
     """Run backward blame propagation and return per-node blame."""
     blame: Dict[str, float] = {}
     for node in graph.nodes():
+        blame[node.id] = node.severity
+
+    for _ in range(cfg.rounds):
+        delta: Dict[str, float] = {}
+        for node in graph.nodes():
+            b = blame.get(node.id, 0.0)
+            if b <= 1e-9:
+                continue
+            for edge in graph.in_edges(node.id):
+                if not graph.has_node(edge.src):
+                    continue
+                up = graph.node(edge.src)
+                kernel = _temporal_kernel(
+                    up.t_end, node.t_start, cfg.half_life, cfg.late_floor
+                )
+                transfer = b * max(0.0, min(1.0, edge.coupling)) * kernel * cfg.damping
+                delta[edge.src] = delta.get(edge.src, 0.0) + transfer
+        for nid, d in delta.items():
+            blame[nid] = blame.get(nid, 0.0) + d
+    return blame
+
+
+def _rationale(node, blame: float, radius: int) -> List[str]:
+    reasons: List[str] = []
+    if node.status == "failed":
+        reasons.append("node reported a hard failure")
+    elif node.status == "degraded":
+        reasons.append("node reported degraded status")
+    if node.error_weight >= 1.0:
+        reasons.append(f"strong local error evidence ({node.error_weight:.2f})")
+    elif node.error_weight > 0.0:
+        reasons.append(f"local error evidence ({node.error_weight:.2f})")
+    if blame >= 0.75:
+        reasons.append("high propagated blame from downstream failures")
