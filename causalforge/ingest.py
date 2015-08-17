@@ -43,25 +43,3 @@ def incident_from_dict(raw: dict) -> Incident:
             coupling=float(e.get("coupling", 1.0)),
             relation=str(e.get("relation", "calls")),
         )
-        for e in raw.get("edges", [])
-    ]
-    return Incident(
-        id=str(raw.get("id", "incident")),
-        title=str(raw.get("title", "Untitled incident")),
-        nodes=nodes,
-        edges=edges,
-        origin_ts=raw.get("origin_ts"),
-        summary=str(raw.get("summary", "")),
-    )
-
-
-_STATUS_FROM_CODE = {0: "ok", 1: "degraded", 2: "failed"}
-
-
-def parse_events(text: str) -> Incident:
-    """Parse the compact line format shared with the C++ engine.
-
-    Grammar (whitespace separated)::
-
-        N <id> <t_start> <t_end> <status_code> <error_weight>
-        E <src> <dst> <coupling>
