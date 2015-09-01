@@ -168,3 +168,60 @@ void rank(CausalGraph& g, int rounds = 6, double half_life = 5.0) {
             Node* up = g.find(kv.first);
             if (up) up->blame += kv.second;
         }
+    }
+
+    // Fold in local error evidence and blast radius; compute final score.
+    for (auto& n : g.nodes) {
+        n.reachable = blast_radius(g, out, n.id);
+        double radius_factor = 1.0 + std::log1p(static_cast<double>(n.reachable)) * 0.25;
+        n.score = (n.blame + n.error_weight) * radius_factor;
+    }
+}
+
+// Parse the compact line format into a graph. Returns false on malformed input
+// but tolerates comments and blank lines.
+bool parse(std::istream& in, CausalGraph& g, std::string& err) {
+    std::string line;
+    std::size_t lineno = 0;
+    while (std::getline(in, line)) {
+        ++lineno;
+        // Trim leading whitespace.
+        std::size_t s = line.find_first_not_of(" \t\r\n");
+        if (s == std::string::npos) continue;
+        if (line[s] == '#') continue;
+        std::istringstream ss(line);
+        char kind = 0;
+        ss >> kind;
+        if (kind == 'N') {
+            Node n;
+            if (!(ss >> n.id >> n.t_start >> n.t_end >> n.status >> n.error_weight)) {
+                err = "malformed N record at line " + std::to_string(lineno);
+                return false;
+            }
+            g.add_node(n);
+        } else if (kind == 'E') {
+            Edge e;
+            if (!(ss >> e.src >> e.dst >> e.coupling)) {
+                err = "malformed E record at line " + std::to_string(lineno);
+                return false;
+            }
+            g.add_edge(e);
+        } else {
+            err = "unknown record kind at line " + std::to_string(lineno);
+            return false;
+        }
+    }
+    return true;
+}
+
+// Emit a ranked report to stdout. Deterministic ordering: score desc, then id.
+void report(const CausalGraph& g) {
+    std::vector<const Node*> ranked;
+    ranked.reserve(g.nodes.size());
+    for (const auto& n : g.nodes) ranked.push_back(&n);
+    std::sort(ranked.begin(), ranked.end(), [](const Node* a, const Node* b) {
+        if (std::abs(a->score - b->score) > 1e-9) return a->score > b->score;
+        return a->id < b->id;
+    });
+
+    std::cout << "CausalForge ranking report\n";
