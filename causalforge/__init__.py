@@ -9,3 +9,15 @@ an incident. The scoring model blends three signals:
   events which finished long before a downstream failure are down-weighted.
 * **Error evidence** — locally observed error weight (exception counts, log
   severity, retry storms) is folded into each node's suspicion score.
+* **Blast radius** — nodes that can influence a larger downstream subgraph are
+  boosted, because a fault there explains more of the observed damage.
+
+The package is dependency-free and relies only on the Python standard library.
+It mirrors the ranking core implemented in ``engine/causal_rank.cpp``.
+"""
+
+from __future__ import annotations
+
+from .model import Node, Edge, Incident, Suspect
+from .graph import CausalGraph
+from .rank import rank_incident, RankConfig
