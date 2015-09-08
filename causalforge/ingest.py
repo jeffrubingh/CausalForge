@@ -43,3 +43,48 @@ def incident_from_dict(raw: dict) -> Incident:
             coupling=float(e.get("coupling", 1.0)),
             relation=str(e.get("relation", "calls")),
         )
+        for e in raw.get("edges", [])
+    ]
+    return Incident(
+        id=str(raw.get("id", "incident")),
+        title=str(raw.get("title", "Untitled incident")),
+        nodes=nodes,
+        edges=edges,
+        origin_ts=raw.get("origin_ts"),
+        summary=str(raw.get("summary", "")),
+    )
+
+
+_STATUS_FROM_CODE = {0: "ok", 1: "degraded", 2: "failed"}
+
+
+def parse_events(text: str) -> Incident:
+    """Parse the compact line format shared with the C++ engine.
+
+    Grammar (whitespace separated)::
+
+        N <id> <t_start> <t_end> <status_code> <error_weight>
+        E <src> <dst> <coupling>
+
+    Lines beginning with ``#`` and blank lines are ignored.
+    """
+    nodes: List[Node] = []
+    edges: List[Edge] = []
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        parts = stripped.split()
+        kind = parts[0]
+        if kind == "N":
+            if len(parts) != 6:
+                raise ValueError(f"malformed N record at line {lineno}")
+            _, nid, ts, te, status_code, ew = parts
+            nodes.append(
+                Node(
+                    id=nid,
+                    t_start=float(ts),
+                    t_end=float(te),
+                    status=_STATUS_FROM_CODE.get(int(status_code), "ok"),
+                    error_weight=float(ew),
+                )
