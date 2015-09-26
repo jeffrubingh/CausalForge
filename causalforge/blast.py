@@ -11,29 +11,3 @@ from __future__ import annotations
 from typing import Set
 
 from .graph import CausalGraph
-
-
-def reachable_set(graph: CausalGraph, start: str) -> Set[str]:
-    """Return every node reachable downstream from ``start`` (excluding itself).
-
-    Uses iterative depth-first traversal with a visited guard so cyclic graphs
-    terminate.
-    """
-    if not graph.has_node(start):
-        return set()
-    seen: Set[str] = set()
-    stack = [start]
-    visited_start = False
-    while stack:
-        cur = stack.pop()
-        if cur in seen:
-            continue
-        if visited_start:
-            seen.add(cur)
-        visited_start = True
-        for edge in graph.out_edges(cur):
-            if edge.dst not in seen and edge.dst != start:
-                stack.append(edge.dst)
-    seen.discard(start)
-    return seen
-
