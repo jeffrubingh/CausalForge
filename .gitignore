@@ -4,3 +4,9 @@ __pycache__/
 dist/
 build/
 out/
+*.exe
+bin/
+obj/
+*.user
+.DS_Store
+
