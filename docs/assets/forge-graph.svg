@@ -31,3 +31,71 @@
   </g>
 
   <!-- edges -->
+  <g stroke="#3a3f47" stroke-width="3" fill="none">
+    <path d="M150,150 L340,90"/>
+    <path d="M150,150 L340,210"/>
+    <path d="M340,90 L540,150"/>
+    <path d="M340,210 L540,150"/>
+    <path d="M540,150 L740,110"/>
+    <path d="M540,150 L740,200"/>
+  </g>
+
+  <!-- travelling blame sparks flowing backward (right to left) -->
+  <g stroke="url(#spark)" stroke-width="4" fill="none" filter="url(#glow)">
+    <path d="M740,110 L540,150" stroke-dasharray="24 220">
+      <animate attributeName="stroke-dashoffset" from="0" to="-244" dur="2.6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M540,150 L340,90" stroke-dasharray="24 220">
+      <animate attributeName="stroke-dashoffset" from="0" to="-244" dur="2.6s" begin="0.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M340,90 L150,150" stroke-dasharray="24 220">
+      <animate attributeName="stroke-dashoffset" from="0" to="-244" dur="2.6s" begin="1.0s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- nodes -->
+  <g font-family="Consolas,Menlo,monospace" font-size="12" fill="#c9ced6" text-anchor="middle">
+    <g>
+      <circle cx="150" cy="150" r="20" fill="url(#ember)" filter="url(#glow)">
+        <animate attributeName="r" values="20;24;20" dur="2.6s" repeatCount="indefinite"/>
+      </circle>
+      <text x="150" y="192">cache.warmer</text>
+    </g>
+    <circle cx="340" cy="90" r="14" fill="#2b2f36" stroke="#ff8a3c" stroke-width="2"/>
+    <text x="340" y="66">retriever</text>
+    <circle cx="340" cy="210" r="14" fill="#2b2f36" stroke="#5b6068" stroke-width="2"/>
+    <text x="340" y="240">embedding</text>
+    <circle cx="540" cy="150" r="15" fill="#2b2f36" stroke="#ff8a3c" stroke-width="2"/>
+    <text x="540" y="126">orchestrator</text>
+    <g>
+      <circle cx="740" cy="110" r="16" fill="url(#ember)" filter="url(#glow)">
+        <animate attributeName="opacity" values="1;0.55;1" dur="1.6s" repeatCount="indefinite"/>
+      </circle>
+      <text x="740" y="86">payment</text>
+    </g>
+    <circle cx="740" cy="200" r="13" fill="#2b2f36" stroke="#5b6068" stroke-width="2"/>
+    <text x="740" y="230">notify.queue</text>
+  </g>
+
+  <!-- title lockup -->
+  <g font-family="Segoe UI,Helvetica,Arial,sans-serif">
+    <text x="40" y="46" fill="#ffd27a" font-size="26" font-weight="700">CausalForge</text>
+    <text x="40" y="70" fill="#8a9099" font-size="13">blame flows backward from failing sinks to the ember at the origin</text>
+  </g>
+
+  <!-- forge ember shower -->
+  <g fill="#ffb066">
+    <circle cx="150" cy="150" r="2">
+      <animate attributeName="cy" values="150;120" dur="1.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="160" cy="150" r="1.5">
+      <animate attributeName="cy" values="150;110" dur="2.2s" begin="0.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0" dur="2.2s" begin="0.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="142" cy="150" r="1.5">
+      <animate attributeName="cy" values="150;118" dur="2.0s" begin="0.9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0" dur="2.0s" begin="0.9s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>
