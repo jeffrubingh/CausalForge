@@ -3,3 +3,21 @@
   "title": "Checkout completion errors after retriever timeout",
   "origin_ts": "2026-04-17T09:14:22Z",
   "summary": "Users saw failed checkouts. The payment service returned 5xx, which traced upstream through the order orchestrator to a slow vector retriever whose cache warmer had stalled.",
+  "nodes": [
+    { "id": "cache.warmer",      "kind": "job",       "t_start": 0.0,  "t_end": 8.5,  "status": "failed",   "error_weight": 1.4, "labels": {"team": "platform"} },
+    { "id": "vector.retriever",  "kind": "service",   "t_start": 8.0,  "t_end": 14.2, "status": "degraded", "error_weight": 0.6, "labels": {"team": "search"} },
+    { "id": "embedding.model",   "kind": "model",     "t_start": 8.2,  "t_end": 12.0, "status": "ok",       "error_weight": 0.0, "labels": {"team": "ml"} },
+    { "id": "order.orchestrator","kind": "service",   "t_start": 13.0, "t_end": 18.5, "status": "degraded", "error_weight": 0.3, "labels": {"team": "checkout"} },
+    { "id": "payment.service",   "kind": "service",   "t_start": 17.0, "t_end": 21.0, "status": "failed",   "error_weight": 0.9, "labels": {"team": "payments"} },
+    { "id": "notification.queue","kind": "queue",     "t_start": 18.0, "t_end": 19.0, "status": "ok",       "error_weight": 0.0, "labels": {"team": "platform"} },
+    { "id": "checkout.frontend", "kind": "service",   "t_start": 20.0, "t_end": 22.5, "status": "failed",   "error_weight": 0.5, "labels": {"team": "web"} }
+  ],
+  "edges": [
+    { "src": "cache.warmer",       "dst": "vector.retriever",   "coupling": 0.9,  "relation": "warms" },
+    { "src": "embedding.model",    "dst": "vector.retriever",   "coupling": 0.7,  "relation": "feeds" },
+    { "src": "vector.retriever",   "dst": "order.orchestrator", "coupling": 0.85, "relation": "calls" },
+    { "src": "order.orchestrator", "dst": "payment.service",    "coupling": 0.95, "relation": "calls" },
+    { "src": "order.orchestrator", "dst": "notification.queue", "coupling": 0.2,  "relation": "emits" },
+    { "src": "payment.service",    "dst": "checkout.frontend",  "coupling": 0.9,  "relation": "returns" }
+  ]
+}
