@@ -4,3 +4,17 @@ CausalForge is a AI Failure Causality Explorer that builds temporal dependency g
 
 ## System flow
 
+`	ext
+fixtures or operator input -> parser -> normalized domain records -> analysis engine -> report model -> terminal / JSON / Markdown
+` 
+
+## Components
+
+- **Python package** owns command handling, portable parsers, report assembly and example workflows.
+- **Native companion** mirrors the central calculation for compact command-line use and implementation parity.
+- **Fixtures and docs** define stable, readable examples that make each analysis result reproducible.
+
+## Data contracts
+
+Input records are plain JSON or JSONL documents. The analysis layer uses typed, normalized records; report renderers consume a compact serializable summary. This boundary keeps extensions additive and makes reports suitable for review pipelines.
+
