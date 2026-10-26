@@ -11,9 +11,17 @@ Two input formats are supported, both parsed with the standard library only:
 from __future__ import annotations
 
 import json
+import math
 from typing import List
 
 from .model import Edge, Incident, Node
+
+
+def _finite(value, field: str) -> float:
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError(f"{field} must be finite, got {value!r}")
+    return number
 
 
 def load_incident(path: str) -> Incident:
@@ -28,10 +36,10 @@ def incident_from_dict(raw: dict) -> Incident:
         Node(
             id=str(n["id"]),
             kind=str(n.get("kind", "event")),
-            t_start=float(n.get("t_start", 0.0)),
-            t_end=float(n.get("t_end", n.get("t_start", 0.0))),
+            t_start=_finite(n.get("t_start", 0.0), "node %s t_start" % n.get("id")),
+            t_end=_finite(n.get("t_end", n.get("t_start", 0.0)), "node %s t_end" % n.get("id")),
             status=str(n.get("status", "ok")),
-            error_weight=float(n.get("error_weight", 0.0)),
+            error_weight=_finite(n.get("error_weight", 0.0), "node %s error_weight" % n.get("id")),
             labels={str(k): str(v) for k, v in n.get("labels", {}).items()},
         )
         for n in raw.get("nodes", [])
@@ -40,7 +48,7 @@ def incident_from_dict(raw: dict) -> Incident:
         Edge(
             src=str(e["src"]),
             dst=str(e["dst"]),
-            coupling=float(e.get("coupling", 1.0)),
+            coupling=_finite(e.get("coupling", 1.0), "edge %s->%s coupling" % (e.get("src"), e.get("dst"))),
             relation=str(e.get("relation", "calls")),
         )
         for e in raw.get("edges", [])
